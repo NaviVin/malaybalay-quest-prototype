@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Choose Your Avatar</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+    <style>
+        .avatar-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            padding: 40px 20px;
+            min-height: 60vh;
+        }
+
+        .avatar-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            padding: 20px;
+            border: 3px solid transparent;
+        }
+
+        .avatar-option:hover {
+            transform: scale(1.1);
+            border-color: #CC5500;
+        }
+
+        /* Avatar thumbnails */
+        .avatar-option img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        /* Force smaller sizes for specific avatars */
+        .aura-avatar img,
+        .fern-avatar img {
+            width: 230px !important;
+            height: 230px !important;
+        }
+
+        /* Title/subtitle spacing and visibility */
+        .quest-title {
+            margin: 16px 0 6px;
+            text-align: center;
+        }
+
+        .quest-sub {
+            margin: 0 0 8px;
+            text-align: center;
+            font-size: 36px;
+            line-height: 1.1;
+        }
+
+        /* Avatar name labels (larger, high-contrast) */
+        .avatar-option label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 36px;
+            color: #000000;
+            text-shadow: 2px 2px 0px #FFE366, 3px 3px 0px #FF6B35;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .avatar-option input[type="radio"] {
+            display: none;
+        }
+
+        .avatar-option input[type="radio"]:checked + label {
+            color: #FFFFFF;
+            text-shadow: 2px 2px 0px #FF6B35, 3px 3px 0px #000000;
+        }
+
+        .selected-border {
+            border: 3px solid #1fb31f !important;
+            box-shadow: 0 0 10px #1fb31f;
+        }
+
+        /* Bring continue button closer to the avatars */
+        .continue-btn-avatar {
+            display: block;
+            margin: 16px auto;
+            padding: 10px 30px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #FFF6D2;
+            color: #CC5500;
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px 0px #CC5500;
+            transition: all 0.1s;
+        }
+
+        .continue-btn-avatar:hover:not(:disabled) {
+            background: #FFE366;
+            color: #000000;
+            box-shadow: 5px 5px 0px 0px #000000;
+        }
+
+        .continue-btn-avatar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="quest-title">CHOOSE YOUR AVATAR</h1>
+    <p class="quest-sub">Select the adventurer that represents you!</p>
+
+    <div class="avatar-container">
+        <div class="avatar-option aura-avatar" onclick="selectAvatar('aura')">
+            <img src="../Images/aura.ico" alt="Aura Avatar">
+            <input type="radio" id="aura-radio" name="avatar" value="aura">
+            <label for="aura-radio">AURA</label>
+        </div>
+
+        <div class="avatar-option fern-avatar" onclick="selectAvatar('fern')">
+            <img src="../Images/fern.ico" alt="Fern Avatar">
+            <input type="radio" id="fern-radio" name="avatar" value="fern">
+            <label for="fern-radio">FERN</label>
+        </div>
+
+        <div class="avatar-option" onclick="selectAvatar('freiren')">
+            <img src="../Images/freiren.ico" alt="Freiren Avatar">
+            <input type="radio" id="freiren-radio" name="avatar" value="freiren">
+            <label for="freiren-radio">FREIREN</label>
+        </div>
+
+        <div class="avatar-option" onclick="selectAvatar('stark')">
+            <img src="../Images/stark.ico" alt="Stark Avatar">
+            <input type="radio" id="stark-radio" name="avatar" value="stark">
+            <label for="stark-radio">STARK</label>
+        </div>
+    </div>
+
+    <button class="continue-btn-avatar" id="continue-avatar-btn" onclick="continueWithAvatar()" disabled>
+        CONTINUE
+    </button>
+
+    <script src="../JS/app.js"></script>
+
+    <script>
+        let selectedAvatar = null;
+
+        function selectAvatar(avatar) {
+            selectedAvatar = avatar;
+            
+            // Remove previous selection
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected-border');
+            });
+            
+            // Mark current selection
+            event.currentTarget.classList.add('selected-border');
+            
+            // Check the radio button
+            document.getElementById(avatar + '-radio').checked = true;
+            
+            // Enable continue button
+            document.getElementById('continue-avatar-btn').disabled = false;
+        }
+
+        function continueWithAvatar() {
+            if (!selectedAvatar) {
+                alert("Please select an avatar!");
+                return;
+            }
+
+            // Save avatar to localStorage
+            localStorage.setItem("playerAvatar", selectedAvatar);
+
+            // Play click sound (if available) and delay navigation so SFX can finish
+            try {
+                if (typeof playClickSound === 'function') playClickSound();
+            } catch (e) {}
+
+            // Disable button to prevent duplicate clicks
+            const btn = document.getElementById('continue-avatar-btn');
+            if (btn) btn.disabled = true;
+
+            setTimeout(() => {
+                window.location.href = "quest.html";
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>

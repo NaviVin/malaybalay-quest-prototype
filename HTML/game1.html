@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Adventure Map</title>
+    
+    <!-- Using a retro-style font via Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Google Maps API (Key must be provided by the environment) -->
+    <!-- The key in the user provided code is a placeholder and should be provided by the environment -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWX43mxQFt5TlZsgO-dJICscZh1OGt_Jg&callback=initMap" async defer></script>
+
+    <!-- FIREBASE IMPORT SCRIPTS (Exposed to Global Window for use in the main script block) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Expose Firebase services to the global window object
+        window.firebase = {
+            initializeApp,
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged,
+            getFirestore,
+            setLogLevel
+        };
+    </script>
+
+    <style>
+        /* --- VINTAGE CREAM & GOLD COLOR PALETTE --- */
+        /* Base: #F9E6E7, Lightest: #FFF6D2, Accent: #FFEDA1, Deep: #FFE366, Contrast: #CC5500, Black: #000000 */
+
+        /* ========================================================= */
+        /* BASE & GLOBAL STYLES */
+        /* ========================================================= */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+            width: 100vw;
+            height: 100vh;
+            /* Prioritize 'VT323' for the main text, as requested in the original code */
+            font-family: 'VT323', monospace; 
+        }
+
+        /* Main Background Placeholder */
+        #game-background {
+            width: 100%;
+            height: 100%;
+            background-color: #F9E6E7; 
+            position: relative;
+        }
+
+        /* Titles and Text */
+        .quest-title {
+            font-size: clamp(30px, 5vw, 50px);
+            color: #1fb31f; 
+            text-shadow: 5px 5px #CC5500; 
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 0;
+            font-family: 'Press Start 2P', monospace; /* Use the pixel font for titles */
+        }
+
+        .quest-sub {
+            font-size: clamp(18px, 2.5vw, 24px);
+            color: #000000;
+            text-shadow: 2px 2px 0px #FFEDA1; 
+            font-weight: bold;
+            margin: 10px 0 0 0;
+        }
+
+        /* ========================================================= */
+        /* MAP AND OVERLAY STYLES */
+        /* ========================================================= */
+
+        #gamified-map {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        /* ========================================================= */
+        /* HUD (Heads-Up Display) - FLOATING CONTROLS */
+        /* ========================================================= */
+
+        #game-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20; /* Float above the map */
+            pointer-events: none; /* Allow clicks to pass through empty space */
+        }
+
+        /* Help Icon (Top Right) */
+        #help-btn {
+            pointer-events: auto; /* Enable clicks */
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* Styling */
+            background: #FFE366; /* Deep Yellow */
+            color: #000000; 
+            border: 3px solid #CC5500; 
+            box-shadow: 3px 3px 0px 0px #000000;
+            transition: all 0.1s;
+        }
+
+        #help-btn:hover {
+            background: #FFEDA1; /* Accent Yellow */
+            box-shadow: 5px 5px 0px 0px #CC5500;
+        }
+
+        /* Control Panel (Bottom Center) */
+        #control-panel {
+            pointer-events: auto;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap; /* Added for mobile responsiveness */
+            justify-content: center;
+            gap: 10px; /* Reduced gap for mobile */
+            padding: 15px 30px;
+            
+            /* Box Styling */
+            background: rgba(249, 230, 231, 0.85); /* #F9E6E7 semi-transparent */
+            border: 3px solid #CC5500;
+            box-shadow: 6px 6px 0px 0px #000000;
+            max-width: 90%;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            
+            /* Standard Button Look (Base Yellow) */
+            background: #FFF6D2; 
+            color: #CC5500;
+            border: 3px solid #000000;
+            box-shadow: 3px 3px 0px 0px #CC5500;
+            transition: all 0.1s;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: #FFE366; /* Deep Yellow */
+            color: #000000;
+            box-shadow: 4px 4px 0px 0px #000000;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #F9E6E7;
+            color: #777;
+            box-shadow: 3px 3px 0px 0px #777;
+        }
+
+        /* ========================================================= */
+        /* MODAL / DIALOGUE STYLES */
+        /* ========================================================= */
+
+        .hidden {
+            display: none !important;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+        }
+
+        /* Start Up Message Style */
+        .startup-content {
+            padding: 40px 60px;
+            background: #FFF6D2;
+            border: 5px solid #CC5500;
+            box-shadow: 10px 10px 0px 0px #000000;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        /* Style for the Continue button in the startup screen */
+        .continue-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            
+            background: #FFF6D2; 
+            color: #CC5500;
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px 0px #CC5500;
+            transition: all 0.1s;
+        }
+
+        .continue-btn:hover:not(:disabled) {
+            background: #FFE366; /* Deep Yellow */
+            color: #000000;
+            box-shadow: 5px 5px 0px 0px #000000;
+        }
+
+
+        /* NPC Dialogue Modal Style */
+        .modal-content {
+            display: flex;
+            flex-direction: row;
+            width: 90%;
+            max-width: 900px;
+            padding: 20px;
+            background: #FFF6D2;
+            border: 5px solid #CC5500;
+            box-shadow: 10px 10px 0px 0px #000000;
+        }
+        
+        /* Responsive adjustments for modal on small screens */
+        @media (max-width: 600px) {
+            .modal-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            .npc-img-placeholder {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .dialogue-text {
+                font-size: 22px;
+            }
+        }
+
+        .npc-img-placeholder {
+            width: 250px; /* Reduced size for better fit */
+            height: 350px;
+            min-width: 250px;
+            border: 3px dashed #CC5500;
+            background-color: #F9E6E7; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            /* Placeholder text styling */
+            font-family: 'Press Start 2P', monospace;
+            color: #CC5500;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+
+        .dialogue-box {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            /* Center children vertically inside the dialogue area */
+            justify-content: center;
+            /* Center the dialogue block horizontally, so its content can be left-aligned */
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dialogue-text {
+            font-family: 'VT323', monospace; 
+            font-size: clamp(20px, 3vw, 28px);
+            line-height: 1.4;
+            color: #000000;
+            min-height: 100px; 
+            white-space: pre-wrap;
+            /* Keep the actual text left-aligned while the block is centered */
+            text-align: left;
+            margin: 0; /* reset margins */
+            padding: 12px 14px; /* add some breathing room */
+            border-right: 3px solid #000000; 
+            animation: blink-cursor 0.5s step-end infinite;
+            /* Constrain width so the block can be centered inside the dialogue-box */
+            width: 90%;
+            max-width: 520px;
+            box-sizing: border-box;
+        }
+
+        @keyframes blink-cursor {
+            from, to { border-color: transparent }
+            50% { border-color: #000000; }
+        }
+
+        .continue-link {
+            /* Small, discreet link for closing */
+            align-self: flex-end;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 14px; /* Reduced size for discreetness */
+            color: #CC5500; 
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .continue-link:hover {
+            color: #FFE366; 
+        }
+
+        /* Hide cursor after typing animation finishes */
+        .dialogue-text.finished {
+            border-right: none;
+            animation: none;
+        }
+
+        /* ========================= */
+        /* 8-BIT PIXELATION EFFECT */
+        /* Color Palette: #ff6b6b #4ccdc4 #47b8d1 #97ceb4 #ffeba8 */
+        /* ========================= */
+
+        /* Pixelate map tiles with nearest-neighbor rendering */
+        #gamified-map .gm-style img,
+        #gamified-map img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            filter: contrast(1.25) saturate(1.45) hue-rotate(-3deg);
+        }
+
+        /* Apply 8-bit posterize + subtle color grading when pixelated class is active */
+        #gamified-map.pixelated {
+            filter: url(#posterize-8bit) contrast(1.06) saturate(1.08) brightness(0.92);
+        }
+
+        /* Subtle scanlines for CRT feel (toned down) */
+        #gamified-map::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(255,107,107,0.008) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(76,205,196,0.006) 1px, transparent 1px);
+            background-size: 100% 4px, 6px 100%;
+            mix-blend-mode: overlay;
+            opacity: 0.35;
+            z-index: 14;
+        }
+
+        /* Vignette effect for retro arcade feel */
+        #gamified-map::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%);
+            mix-blend-mode: multiply;
+            opacity: 0.8;
+            z-index: 13;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- SVG 8-bit Posterize Filter using retro color palette -->
+<svg style="position:absolute;width:0;height:0;pointer-events:none;">
+  <filter id="posterize-8bit">
+    <!-- Reduce to 5 main colors: red (#ff6b6b), teal (#4ccdc4), blue (#47b8d1), green (#97ceb4), yellow (#ffeba8) -->
+    <feComponentTransfer color-interpolation-filters="sRGB">
+      <feFuncR type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1"/>
+      <feFuncG type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1"/>
+      <feFuncB type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1"/>
+    </feComponentTransfer>
+    <!-- Slight color shift toward the retro palette -->
+    <feColorMatrix type="saturate" values="1.4"/>
+  </filter>
+</svg>
+
+    <!-- Main Container: Map Background Placeholder -->
+    <div id="game-background">
+        <!-- 1. Google Map Container -->
+        <div id="gamified-map">
+            <!-- Map will be injected here by Google Maps JS -->
+        </div>
+
+        <!-- 2. Floating HUD Elements -->
+        <div id="game-hud">
+            
+            <!-- Top Right: Help Icon -->
+            <button id="help-btn" class="hud-icon-btn">
+                ?
+            </button>
+
+            <!-- Bottom Center: Control Panel -->
+            <div id="control-panel">
+                <button id="wayfind-btn" class="control-btn">
+                    WAYFIND 🧭
+                </button>
+                <button id="center-btn" class="control-btn">
+                    CENTER MAP 📍
+                </button>
+                <button id="begin-btn" class="control-btn" disabled>
+                    BEGIN ⚔️
+                </button>
+            </div>
+            
+        </div>
+
+        <!-- 3. Modal for NPC Dialogue/Instructions (Hidden by default) -->
+        <div id="instruction-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="npc-img-placeholder">
+    <!-- Replace YOUR_NPC_IMAGE_URL_HERE with the actual link to your image -->
+    <img 
+        src="/Images/NPC_intro.png" 
+        alt="Quest Master NPC" 
+        style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;"
+    >
+</div>
+                <div class="dialogue-box">
+                    <p id="npc-dialogue" class="dialogue-text"></p>
+                    <button id="close-modal-btn" class="continue-link">
+                        [CLOSE]
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Initial Startup Message (Shown on load, hidden after first instruction) -->
+        <div id="startup-message" class="modal-overlay">
+            <div class="startup-content">
+                <h1 class="quest-title">MAP INITIALIZING...</h1>
+                <p class="quest-sub">Ready for your quest?</p>
+                <!-- NEW CONTINUE BUTTON -->
+                <button id="startup-continue-btn" class="continue-btn">CONTINUE</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Background Music (Frieren soundtrack) -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="/FX/Frieren.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- SCRIPT FOR GAME LOGIC -->
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let db;
+        let auth;
+        let map;
+        let userId = 'anonymous';
+
+        // New globals for Google Maps services
+        let directionsService;
+        let directionsRenderer;
+        let userMarker; 
+        let isNavigating = false;
+        let watchId = null; // To hold the geolocation watch handler
+
+        // The NPC's instructions for the player (will be updated with player name)
+        let NPC_INSTRUCTIONS = "Welcome, Adventurer! This is your Quest Map. Your primary mission is to find the Malaybalay City Capitol Grounds. Use the WAYFIND button to calculate your route, then press BEGIN to start the turn-by-turn guidance. Click the '?' icon anytime if you need a reminder!";
+        
+        // Update greeting with player's name
+        const playerName = localStorage.getItem("playerName") || "Adventurer";
+        NPC_INSTRUCTIONS = `Welcome, ${playerName}! This is your Quest Map. Your primary mission is to find the Malaybalay City Capitol Grounds. Use the WAYFIND button to calculate your route, then press BEGIN to start the turn-by-turn guidance. Click the '?' icon anytime if you need a reminder!`;
+        
+        // Destination Location: Malaybalay City Capitol Grounds (Philippines)
+        const DESTINATION = { lat: 8.156127, lng: 125.131938 }; 
+
+        // --- GOOGLE MAPS STYLING FOR RETRO EFFECT (Dark Theme with Green) ---
+        const RETRO_MAP_STYLE = [
+            { elementType: "geometry", stylers: [{ color: "#0a0e14" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#0a0e14" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#4A9D4A" }] },
+            {
+                featureType: "administrative.locality",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#5AB05A" }],
+            },
+            {
+                featureType: "road",
+                elementType: "geometry",
+                stylers: [{ color: "#1a1f27" }],
+            },
+            {
+                featureType: "road",
+                elementType: "geometry.stroke",
+                stylers: [{ color: "#0d1117" }],
+            },
+            {
+                featureType: "road",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#6BC76B" }],
+            },
+            {
+                featureType: "water",
+                elementType: "geometry",
+                stylers: [{ color: "#060b12" }],
+            },
+            {
+                featureType: "landscape.man_made",
+                elementType: "geometry.fill",
+                stylers: [{ color: "#0f1419" }],
+            },
+        ];
+
+        // --- FIREBASE INITIALIZATION AND AUTHENTICATION ---
+        async function initFirebase() {
+            try {
+                // Check if firebase object is available (imported via type="module" script)
+                if (typeof window.firebase === 'undefined') {
+                    console.error("Firebase services failed to load. Check import scripts.");
+                    return;
+                }
+
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // Safely parse the config string
+                let firebaseConfig = {};
+                try {
+                    firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                } catch (e) {
+                    console.error("Error parsing firebase config:", e);
+                }
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config not found. Running map without persistence.");
+                    return;
+                }
+
+                const app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.getAuth(app);
+                db = firebase.getFirestore(app);
+                firebase.setLogLevel('Debug'); // Enable Firestore logging
+
+                // Authentication
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await firebase.signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await firebase.signInAnonymously(auth);
+                }
+
+                // Set up auth state change listener to get the final userId
+                firebase.onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase initialized. User ID:", userId);
+                    } else {
+                        console.log("Signed out or anonymous.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+            }
+        }
+
+        // --- GOOGLE MAPS INITIALIZATION ---
+        window.initMap = function() {
+            const malaybalayCenter = DESTINATION; 
+
+            map = new google.maps.Map(document.getElementById("gamified-map"), {
+                center: malaybalayCenter, 
+                zoom: 15,
+                mapId: "QUEST_MAP", // Custom Map ID
+                disableDefaultUI: true,
+                styles: RETRO_MAP_STYLE,
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true, // We draw our own markers
+                polylineOptions: {
+                    strokeColor: '#FFE366', 
+                    strokeWeight: 5,
+                    strokeOpacity: 0.8
+                }
+            });
+
+            // Enable 8-bit pixelated + posterize effect on the map
+            const gmEl = document.getElementById('gamified-map');
+            if (gmEl) {
+                gmEl.classList.add('pixelated');
+            }
+
+            // Destination Marker (Red Star)
+            new google.maps.Marker({
+                position: DESTINATION, 
+                map: map,
+                title: "Capitol Grounds - DESTINATION",
+                icon: {
+                    url: "https://maps.google.com/mapfiles/kml/paddle/red-stars.png", 
+                    scaledSize: new google.maps.Size(32, 32)
+                }
+            });
+
+            getInitialLocation();
+        }
+
+        // --- GEOLOCATION ---
+        function getInitialLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+                        
+                        map.setCenter(pos);
+                        // Try to use selected avatar as marker icon (fallback to simple white circle)
+                        const selectedAvatar = localStorage.getItem('playerAvatar');
+                        // Use absolute path from HTML root for Google Maps compatibility
+                        const avatarIconUrl = selectedAvatar ? `/Images/${selectedAvatar}.ico` : null;
+
+                        userMarker = new google.maps.Marker({
+                            position: pos,
+                            map: map,
+                            title: `${playerName}'s Current Location`,
+                            optimized: false, // render as DOM element to avoid map canvas filters
+                            icon: {
+                                url: avatarIconUrl || "https://maps.google.com/mapfiles/kml/paddle/wht-blank.png",
+                                scaledSize: new google.maps.Size(80, 80),
+                                // anchor roughly at center
+                                anchor: new google.maps.Point(40, 40)
+                            }
+                        });
+
+                        console.log(`${playerName}'s initial location found:`, pos);
+                        showInitialStartupMessage();
+                    },
+                    (error) => {
+                        handleLocationError(true, map.getCenter(), error);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 } // Options for better accuracy
+                );
+            } else {
+                handleLocationError(false, map.getCenter());
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, pos, error = null) {
+            let message = "";
+            if (!browserHasGeolocation) {
+                message = "Error: Your browser doesn't support geolocation.";
+            } else if (error && error.code === error.PERMISSION_DENIED) {
+                 message = "Error: Geolocation permission denied by the user. Map centered on destination.";
+            } else {
+                 message = "Error: The Geolocation service failed. Map centered on destination.";
+            }
+            
+            console.warn(message);
+            map.setCenter(pos);
+            showInstructionModal("NPC ERROR: "+ message, false); // Show error message via modal
+            
+            // Still show the startup message to allow user to proceed
+            showInitialStartupMessage();
+        }
+
+        // --- DIRECTIONS SERVICE IMPLEMENTATION ---
+        function calculateAndDisplayRoute() {
+            if (!userMarker) {
+                showInstructionModal(`NPC ERROR: Cannot find ${playerName}'s current location. Route calculation requires location access.`, true);
+                wayfindBtn.textContent = "WAYFIND 🧭";
+                return;
+            }
+            
+            wayfindBtn.disabled = true;
+
+            directionsService.route({
+                origin: userMarker.getPosition(), 
+                destination: DESTINATION,
+                // Using DRIVING mode for a common path calculation
+                travelMode: google.maps.TravelMode.DRIVING, 
+            })
+            .then((response) => {
+                directionsRenderer.setDirections(response);
+                
+                // Keep the user marker on the map, but possibly style the direction line differently
+                // We will rely on the polyline for the path.
+                
+                wayfindBtn.textContent = "WAYFIND FOUND ✅";
+                wayfindBtn.disabled = false;
+                beginBtn.disabled = false;
+
+                // Show instruction to begin
+                showInstructionModal("The ancient scrolls have revealed the path! Press 'BEGIN' to start navigating the sacred route.", false);
+                console.log("Route calculated and displayed.");
+                
+            })
+            .catch((e) => {
+                console.error("Directions request failed:", e);
+                wayfindBtn.textContent = "WAYFIND ERROR ❌";
+                wayfindBtn.disabled = false;
+                beginBtn.disabled = true;
+                showInstructionModal("NPC ERROR: The path is blocked! Directions service failed. Check your internet connection or try again later.", true);
+            });
+        }
+        
+        // --- NAVIGATION LOGIC ---
+        function startNavigation() {
+            if (isNavigating) return;
+
+            isNavigating = true;
+            wayfindBtn.style.display = 'none';
+            beginBtn.textContent = "NAVIGATING...";
+            beginBtn.disabled = true; // Disable button while navigating
+
+            // Start continuous location watch
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+
+                    // Update marker position and pan the map to follow the user
+                    userMarker.setPosition(pos);
+                    map.panTo(pos);
+                    
+                    // Check for destination proximity (simple distance check, e.g., within 50 meters)
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                        new google.maps.LatLng(pos), 
+                        new google.maps.LatLng(DESTINATION)
+                    );
+
+                    if (distance < 50) { // If within 50 meters
+                        endNavigation(true);
+                    }
+                },
+                (error) => {
+                    console.error("Geolocation watch error:", error);
+                    // If watch fails, stop navigation
+                    endNavigation(false);
+                    showInstructionModal("WARNING! Your tracking spell failed. Navigation stopped.", true);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+
+            showInstructionModal("Turn-by-turn guidance initiated! Follow the golden path and seek the Capitol Grounds!", false);
+            console.log("Turn-by-turn navigation started. Watch ID:", watchId);
+        }
+
+        function endNavigation(success) {
+            isNavigating = false;
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            // Reset UI
+            wayfindBtn.style.display = 'inline-block';
+            beginBtn.textContent = "BEGIN ⚔️";
+            beginBtn.disabled = !success; // Keep disabled if navigation failed
+            wayfindBtn.disabled = false;
+            
+            if (success) {
+                showInstructionModal("CONGRATULATIONS! You have reached your Quest Objective: The Capitol Grounds!", false);
+            }
+        }
+
+
+        // --- TYPEWRITER ANIMATION LOGIC ---
+        let currentTypingTimeout;
+        function typeWriter(text, elementId, callback = () => {}) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            // Clear previous timeout if one exists
+            if (currentTypingTimeout) clearTimeout(currentTypingTimeout);
+
+            element.innerHTML = ''; 
+            element.classList.remove('finished');
+            let i = 0;
+            const speed = 40; 
+
+            function type() {
+                if (i < text.length) {
+                    if (text.charAt(i) === '\n') {
+                        element.innerHTML += "<br><br>"; 
+                    } else {
+                        element.innerHTML += text.charAt(i);
+                    }
+                    i++;
+                    currentTypingTimeout = setTimeout(type, speed);
+                } else {
+                    element.classList.add('finished');
+                    callback();
+                }
+            }
+            type();
+        }
+
+        // --- MODAL AND GAME CONTROL LOGIC ---
+
+        // Handler function for the startup screen
+        const handleInitialAction = () => {
+            if (startupMessage.classList.contains('hidden')) return;
+
+            startupMessage.classList.add('hidden');
+            showInstructionModal(NPC_INSTRUCTIONS, false); // Proceed to the NPC briefing
+        };
+
+
+        // 1. Show the Initial Startup Message 
+        function showInitialStartupMessage() {
+            startupMessage.classList.remove('hidden');
+            // Listener is attached globally below
+        }
+
+        // 2. Show the NPC Instruction Modal
+        function showInstructionModal(message, isError) {
+            const dialogueEl = document.getElementById('npc-dialogue');
+            const placeholderEl = document.querySelector('.npc-img-placeholder');
+            
+            if (isError) {
+                // Change appearance for errors
+                placeholderEl.style.borderColor = 'red';
+                dialogueEl.style.color = 'red';
+            } else {
+                // Reset to default
+                placeholderEl.style.borderColor = '#CC5500';
+                dialogueEl.style.color = '#000000';
+            }
+
+            instructionModal.classList.remove('hidden');
+            typeWriter(message, 'npc-dialogue');
+        }
+
+        // 3. Close Modal Logic
+        function closeModal() {
+            instructionModal.classList.add('hidden');
+            document.getElementById('npc-dialogue').classList.add('finished');
+        }
+
+
+        // --- APP STARTUP AND EVENT LISTENERS (Run last, after DOM is ready) ---
+        // Retrieve elements
+        const startupMessage = document.getElementById('startup-message');
+        const instructionModal = document.getElementById('instruction-modal');
+        const helpBtn = document.getElementById('help-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const wayfindBtn = document.getElementById('wayfind-btn');
+        const centerBtn = document.getElementById('center-btn');
+        const beginBtn = document.getElementById('begin-btn');
+        const startupContinueBtn = document.getElementById('startup-continue-btn'); 
+
+        // Initialize Firebase
+        initFirebase();
+        
+        // Start background music on page load
+        const bgMusic = document.getElementById('bg-music');
+        if (bgMusic) {
+            // Attempt autoplay (may require user interaction depending on browser)
+            bgMusic.volume = 0.5; // Set to 50% volume (adjust 0-1 as needed)
+            const playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Autoplay may be blocked; log and allow manual start
+                    console.log("Autoplay blocked by browser. Music will start on first user interaction.");
+                    // Fallback: play on first click
+                    document.addEventListener('click', () => {
+                        if (bgMusic.paused) bgMusic.play().catch(e => console.log('Music play failed:', e));
+                    }, { once: true });
+                });
+            }
+        }
+        
+        // Static Button Event Listeners
+        helpBtn.addEventListener('click', () => {
+             // If already navigating, show navigation status instead of initial instructions
+            if (isNavigating) {
+                showInstructionModal("You are currently mid-quest! Follow the marked path to reach the destination. Safe travels!", false);
+            } else {
+                showInstructionModal(NPC_INSTRUCTIONS, false);
+            }
+        });
+        closeModalBtn.addEventListener('click', closeModal);
+        startupContinueBtn.addEventListener('click', handleInitialAction);
+
+        // Center map button handler
+        if (centerBtn) {
+            centerBtn.addEventListener('click', () => {
+                // Global click sound handler in app.js will already play the SFX for button clicks
+                if (userMarker && typeof userMarker.getPosition === 'function') {
+                    const pos = userMarker.getPosition();
+                    if (pos) {
+                        map.setCenter(pos);
+                        map.setZoom(17);
+                        return;
+                    }
+                }
+
+                // Fallback: request current position and center
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((p) => {
+                        const cur = { lat: p.coords.latitude, lng: p.coords.longitude };
+                        map.setCenter(cur);
+                        map.setZoom(17);
+                    }, (err) => {
+                        showInstructionModal('NPC ERROR: Unable to determine your location to center the map.', true);
+                    }, { enableHighAccuracy: true, timeout: 5000 });
+                } else {
+                    showInstructionModal('NPC ERROR: Geolocation is not available in this environment.', true);
+                }
+            });
+        }
+
+
+        wayfindBtn.addEventListener('click', () => {
+            console.log("WAYFIND clicked. Calculating route...");
+            wayfindBtn.textContent = "WAYFIND... (WAIT)";
+            beginBtn.disabled = true; 
+            calculateAndDisplayRoute();
+        });
+
+        beginBtn.addEventListener('click', () => {
+            console.log("BEGIN clicked. Starting navigation...");
+            startNavigation();
+        });
+
+        // Add a general check for the geometry library needed for distance calculation
+        window.addEventListener('load', () => {
+            if (typeof google === 'undefined' || typeof google.maps.geometry === 'undefined') {
+                console.warn("Google Maps Geometry Library is not loaded. Distance checking (for quest completion) will not work.");
+            }
+        });
+// (Removed duplicate lazy-load for button sound; centralized in JS/button-sound.js)
+    </script>
+    
+    <script src="../JS/app.js"></script>   
+</body>
+</html>

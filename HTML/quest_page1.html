@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The First Quest</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+</head>
+<body>
+
+    <div class="quest-container">
+        
+        <div class="npc-area">
+            <img src="/Images/NPC_intro.png" alt="NPC Guide" class="npc-img">
+        </div>
+        
+        <div class="dialogue-box">
+            
+            <p id="dialogueText" class="dialogue-text"></p>
+            
+            <div class="continue-area">
+                <a href="quest_page2.html" class="continue-link">
+                    Click to Continue >>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let playerName = localStorage.getItem("playerName") || "adventurer";
+        playerName = playerName.charAt(0).toUpperCase() + playerName.slice(1);
+        const npcDialogue = `Greetings, ${playerName}! \n\nMalaybalay City is filled with wonders—hidden paths, secret landmarks, and stories waiting to be uncovered. Steel your courage and open your senses, for the quest ahead will test both your eyes and your spirit.`;
+        const dialogueElement = document.getElementById('dialogueText');
+        const speed = 40; // Typing speed in milliseconds
+
+        let i = 0;
+
+        function typeWriter() {
+            if (i < npcDialogue.length) {
+                // Check for newline character and insert <br>
+                if (npcDialogue.charAt(i) === '\n') {
+                    dialogueElement.innerHTML += "<br>";
+                } else {
+                    dialogueElement.innerHTML += npcDialogue.charAt(i);
+                }
+                i++;
+                setTimeout(typeWriter, speed);
+            }
+        }
+
+        // Start the animation when the page loads
+        window.onload = typeWriter;
+    </script>
+    
+    <script src="../JS/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,384 @@
+/* ------------------------------------------- */
+/* GLOBAL STYLES (body) - CENTERING FIXES APPLIED */
+/* ------------------------------------------- */
+body {
+    margin: 0;
+    padding: 0;
+    
+    /* Full screen layout */
+    width: 100vw;
+    height: 100vh; /* CRITICAL for vertical centering */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically centers the content */
+    align-items: center; /* Horizontally centers the content */
+
+    text-align: center;
+    font-family: 'VT323';
+    /* Full background */
+    background-image: url("../Images/Background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    /* Base Text Color: Use the most saturated yellow/gold for visibility */
+    color: #FFE366; 
+}
+/* ------------------------------------------- */
+/* REMAINDER OF CSS (Colors Unchanged from last request) */
+/* ------------------------------------------- */
+
+/* MAIN TITLE */
+.title {
+    font-size: 100px;
+    margin-bottom: 30px;
+    
+    /* Primary Title Color: Accent Yellow */
+    color: #FFEDA1; 
+    /* Shadow: Dark Orange for deep contrast */
+    text-shadow: 10px 10px #CC5500; 
+    
+    font-weight: bold;
+    animation: pulse 2s infinite; 
+}
+
+/* Define the Animation Keyframes */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 8px 8px #CC5500; 
+    }
+    50% {
+        transform: scale(1.02);
+        text-shadow: 12px 12px #CC5500; 
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 8px 8px #CC5500; 
+    }
+}
+
+/* SUB-TITLES (NAME & QUEST) */
+.name-title,
+.quest-title
+{
+    font-size: 50px;
+    margin-bottom: 30px;
+    
+    /* Secondary Title Color: Lightest Cream */
+    color: #FFF6D2; 
+    /* Shadow: Dark Orange */
+    text-shadow: 5px 5px #CC5500; 
+    
+    font-weight: bold;
+    letter-spacing: 1px;
+    animation: subtle-pulse 4s infinite; 
+}
+
+/* Define the Subtle Pulse Animation */
+@keyframes subtle-pulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 5px 5px #CC5500; 
+    }
+    50% {
+        transform: scale(1.01); 
+        text-shadow: 6px 6px #CC5500; 
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 5px 5px #CC5500; 
+    }
+}
+
+/* START BUTTON */
+.start-btn {
+    padding: 15px 35px;
+    margin-top: 25px;
+    font-size: 20px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+    transition: all 0.08s ease-out; 
+    
+    /* Button Base: Base Yellow */
+    background: #FFF6D2; 
+    color: #000000; 
+    border: 4px solid #000000; 
+    box-shadow: 8px 8px 0px 0px #000000; 
+}
+
+/* Hover State */
+.start-btn:hover {
+    background: #FFEDA1; /* Accent Yellow on hover */
+    box-shadow: 10px 10px 0px 0px #000000; 
+}
+
+/* Active State */
+.start-btn:active {
+    background: #FFE366; /* Deep Yellow on press */
+    transform: translate(5px, 5px);
+    box-shadow: 3px 3px 0px 0px #000000;
+}
+
+/* NAME SUBMIT BUTTON */
+.name-submit {
+    padding: 15px 35px;
+    margin-top: 25px;
+    font-size: 20px;
+    border: 4px solid #000000; 
+    cursor: pointer;
+    font-family: 'Press Start 2P', monospace;
+
+    /* Base: Accent Yellow */
+    background: #FFEDA1; 
+    color: #000000; 
+    font-weight: bold;
+    letter-spacing: 2px;
+    
+    /* 3D POP EFFECT */
+    box-shadow: 8px 8px 0px 0px #000000; 
+    
+    transition: all 0.08s ease-out; 
+}
+
+/* Hover State */
+.name-submit:hover {
+    background: #FFE366; /* Deep Yellow on hover */
+    box-shadow: 10px 10px 0px 0px #000000;
+}
+
+/* Active State */
+.name-submit:active {
+    background: #FFF6D2; /* Base Yellow on press */
+    transform: translate(5px, 5px);
+    box-shadow: 3px 3px 0px 0px #000000; 
+}
+
+/* STYLING THE INPUT FIELD */
+#playerNameInput {
+    width: 350px;
+    padding: 12px;
+    font-size: 18px;
+    border: none;
+    border-bottom: 3px solid #CC5500; /* DARK ORANGE border */
+    background: #F9E6E7; /* Lightest Cream input background */
+    outline: none;
+    text-align: center;
+    font-family: 'Press Start 2P', monospace;
+    color: #000000; 
+    
+    box-shadow: 0 0 0px 2px transparent; 
+    transition: box-shadow 0.2s ease-in-out; 
+}
+
+/* Focus State: Makes the input glow */
+#playerNameInput:focus {
+    border-bottom: 3px solid #FFE366; /* Deep Yellow bottom border */
+    box-shadow: 0 0 10px 2px #FFEDA1; /* Accent Yellow glow effect */
+}
+
+/* Placeholder Text Style */
+#playerNameInput::placeholder {
+    color: #CC5500; /* DARK ORANGE for a subdued hint */
+    opacity: 0.8; 
+}
+
+/* QUEST SUBTEXT */
+.quest-sub {
+    font-size: 50px;
+    margin-top: 20px;
+    color: #000000; /* Black text for maximum visibility */
+    
+    font-weight: bold;
+    letter-spacing: 2px;
+    /* Neon effect using Accent Yellow outline */
+    text-shadow: 2px 2px 0px #FFEDA1; 
+    
+    animation: 
+        pulse-subtle 3s infinite, 
+        flicker 0.15s infinite alternate; 
+}
+
+/* CONTINUATION BUTTON STYLES */
+.continue-btn {
+    /* Base Button Styling (Copied from other buttons) */
+    text-decoration: none; /* Remove underline */
+    padding: 15px 35px;
+    margin-top: 50px; /* Add extra spacing after the quest subtext */
+    font-size: 20px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+    transition: all 0.08s ease-out; 
+    
+    /* NEW COLORS (Using your #ffe366 and #cc5500 for high visibility) */
+    background: #FFE366; /* Deep Yellow base */
+    color: #000000; /* Black text for readability */
+    border: 4px solid #000000; 
+    box-shadow: 8px 8px 0px 0px #000000; 
+}
+
+/* Hover State */
+.continue-btn:hover {
+    background: #CC5500; /* DARK ORANGE on hover */
+    color: #FFF6D2; /* Light text on dark background */
+    box-shadow: 10px 10px 0px 0px #000000; 
+}
+
+/* Active State (The satisfying press effect) */
+.continue-btn:active {
+    background: #FFEDA1; /* Accent Yellow on press */
+    transform: translate(5px, 5px);
+    box-shadow: 3px 3px 0px 0px #000000;
+}
+
+.quest-container {
+    /* Inherits full screen size and background from body */
+    display: flex;
+    flex-direction: row; /* Arranges NPC and box side-by-side */
+    justify-content: center; 
+    align-items: center; /* Vertically centers the entire container */
+    
+    /* Give it some padding so elements don't hug the screen edges */
+    width: 90vw;
+    height: 90vh;
+}
+
+/* ------------------------------------------- */
+/* NPC IMAGE AREA (Left side, centered vertically) */
+/* ------------------------------------------- */
+.npc-area {
+    width: 20%; /* Takes up 20% of the container width */
+    height: 100%;
+    display: flex;
+    justify-content: flex-start; /* Aligns content (image) to the far left */
+    align-items: center; /* Vertically centers the image */
+    padding-left: 20px;
+}
+
+.npc-img {
+    /* Placeholder for the image. Assuming a small pixel sprite. */
+    max-width: 100%;
+    max-height: 80%;
+    /* Optional: Retro border/shadow for the image if needed */
+    /* border: 3px solid #000000; */
+}
+
+/* ------------------------------------------- */
+/* DIALOGUE BOX AREA (Center) */
+/* ------------------------------------------- */
+.dialogue-box {
+    width: 70%; /* Dialogue takes up most of the remaining space */
+    padding: 30px;
+    
+    /* Box Appearance: Use a light background with a bold border */
+    background: rgba(255, 255, 255, 0.9); /* Slightly translucent white/cream */
+    border: 5px solid #CC5500; /* DARK ORANGE border */
+    box-shadow: 10px 10px 0px 0px #000000; /* Black 3D box shadow */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.dialogue-text {
+    font-family: 'VT323', monospace; 
+    font-size: 28px;
+    line-height: 1.4;
+    color: #000000; /* Black text for high readability on light background */
+    min-height: 200px; /* Ensures the box stays open even before text loads */
+    white-space: pre-wrap; /* Keeps the newline characters from the JS (like \n) */
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* ------------------------------------------- */
+/* SMALL CONTINUE LINK */
+/* ------------------------------------------- */
+.continue-area {
+    width: 100%;
+    text-align: right; /* Aligns the link to the bottom right of the box */
+}
+
+.continue-link {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px; 
+    color: #CC5500; /* DARK ORANGE color */
+    text-decoration: none;
+    cursor: pointer;
+    
+    /* Subtle Hover Effect: Makes it glow softly */
+    transition: color 0.15s ease-in-out; 
+    text-shadow: 1px 1px #FFE366; /* Deep Yellow subtle shadow */
+}
+
+.continue-link:hover {
+    color: #FF8800; /* ORANGE on hover */
+    text-shadow: 2px 2px #FFEDA1; /* Accent Yellow shadow */
+}
+
+#gameScreen {
+    /* Inherit full screen size and centering from the <body> */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+#gameMapContainer {
+    /* Define the size of the map view area */
+    width: 80%;
+    height: 60%; 
+    
+    /* Retro Screen Styling */
+    border: 5px solid #000000; /* Black border */
+    box-shadow: 10px 10px 0px 0px #CC5500; /* Dark Orange shadow for depth */
+    position: relative; /* Crucial for positioning the reveal overlay */
+    overflow: hidden; /* Ensures the map content stays within the border */
+    
+    /* Using a dark color as the base "off-screen" color */
+    background-color: #CC5500; 
+}
+
+/* ------------------------------------------- */
+/* MAP REVEAL OVERLAY */
+/* ------------------------------------------- */
+#mapOverlay {
+    /* Covers the entire map container */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Initial state: opaque, blocking the map view */
+    background-color: rgba(0, 0, 0, 0.9); 
+    
+    /* Placeholder for the slow reveal transition */
+    transition: opacity 5s ease-out; /* The fade effect will take 5 seconds */
+    pointer-events: none; /* Allows clicks to pass through to the map */
+}
+
+/* ------------------------------------------- */
+/* HUD (Heads-Up Display) STYLES */
+/* ------------------------------------------- */
+#hud {
+    text-align: center;
+    padding: 20px;
+}
+
+#hud .quest-title {
+    margin-bottom: 5px;
+}
+
+#hud .quest-sub {
+    font-size: 20px;
+}

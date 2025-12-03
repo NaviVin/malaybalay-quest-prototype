@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The First Quest</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+</head>
+<body>
+
+    <div class="quest-container">
+        
+        <div class="npc-area">
+            <img src="/Images/NPC_intro.png" alt="NPC Guide" class="npc-img">
+        </div>
+        
+        <div class="dialogue-box">
+            
+            <p id="dialogueText" class="dialogue-text"></p>
+            
+            <div class="continue-area">
+                <a href="game1.html" class="continue-link">
+                    Click to Continue >>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const npcDialogue = "Part 1: Journey to the Capitol Grounds \n\n\nYour first task awaits at the Malaybalay City Capitol Grounds. Travel there and seek the starting clue of your quest. The land will guide you—follow the paths, explore the surroundings, and let your adventure take root.";
+        const dialogueElement = document.getElementById('dialogueText');
+        const speed = 40; // Typing speed in milliseconds
+
+        let i = 0;
+
+        function typeWriter() {
+            if (i < npcDialogue.length) {
+                // Check for newline character and insert <br>
+                if (npcDialogue.charAt(i) === '\n') {
+                    dialogueElement.innerHTML += "<br>";
+                } else {
+                    dialogueElement.innerHTML += npcDialogue.charAt(i);
+                }
+                i++;
+                setTimeout(typeWriter, speed);
+            }
+        }
+
+        // Start the animation when the page loads
+        window.onload = typeWriter;
+    </script>
+
+    <script src="../JS/app.js"></script>
+</body>
+</html>

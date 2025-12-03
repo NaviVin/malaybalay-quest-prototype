@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quest Start</title>
+    <link rel="stylesheet" href="../CSS/style.css">
+</head>
+<body>
+
+    <h1 id="welcomeText" class="quest-title">Loading...</h1>
+    <p class="quest-sub">Your journey begins now…</p>
+
+    <a href="quest_page1.html" class="continue-btn">
+        CONTINUE
+    </a>
+
+    <script src="../JS/app.js"></script>
+
+    <script>
+        const name = localStorage.getItem("playerName") || "Adventurer";
+        document.getElementById("welcomeText").innerHTML =
+            "WELCOME, " + name.toUpperCase() + "!";
+    </script>
+</body>
+</html>
