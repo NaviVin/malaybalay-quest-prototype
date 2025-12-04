@@ -22,7 +22,7 @@ function playClickSound() {
 function startGame() {
     playClickSound();
     setTimeout(() => {
-        window.location.href = "HTML/name.html";
+        window.location.href = "/html/name.html";
     }, 1000);
 }
 
